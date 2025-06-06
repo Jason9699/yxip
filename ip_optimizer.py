@@ -18,7 +18,11 @@ CLOUDFLARE_IPS_URL = os.getenv('CLOUDFLARE_IPS_URL')
 
 # 获取 Cloudflare IP 段 [9](@ref)
 def fetch_cloudflare_ips():
-    res = requests.get(CLOUDFLARE_IPS_URL)
+    url = os.getenv('CLOUDFLARE_IPS_URL')
+    # 添加协议头检查
+    if not url.startswith(('http://', 'https://')):
+        url = f"https://{url}"  # 默认使用 HTTPS
+    res = requests.get(url)
     return res.text.splitlines()
 
 # 生成随机 IP [10](@ref)
