@@ -9,23 +9,26 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse
 from tqdm import tqdm
 import urllib3
+import ipaddress
+import threading
 
 ####################################################
 #                 可配置参数（程序开头）              #
 ####################################################
 # 环境变量默认值（可通过.env或GitHub Actions覆盖）
 CONFIG = {
-    "MODE": "TCP",                 # 测试模式：PING/TCP
-    "PING_TARGET": "https://www.google.com/generate_204", # Ping测试目标
+    "MODE": "TCP",                  # 测试模式：PING/TCP
+    "PING_TARGET": "https://www.google.com/generate_204",  # Ping测试目标
     "PING_COUNT": 3,                # Ping次数
-    "PING_TIMEOUT": 2,               # Ping超时(秒)
+    "PING_TIMEOUT": 2,              # Ping超时(秒)
     "PORT": 443,                    # TCP测试端口
-    "RTT_RANGE": "0~9999",         # 延迟范围(ms)
+    "RTT_RANGE": "0~9999",          # 延迟范围(ms)
     "LOSS_MAX": 30.0,               # 最大丢包率(%)
     "THREADS": 50,                  # 并发线程数
     "IP_COUNT": 300,                # 测试IP数量
     "TOP_IPS_LIMIT": 15,            # 精选IP数量
-    "CLOUDFLARE_IPS_URL": "www.cloudflare.com/ips-v4"
+    "CLOUDFLARE_IPS_URL": "https://www.cloudflare.com/ips-v4",
+    "TCP_RETRY": 3                  # TCP重试次数
 }
 
 ####################################################
@@ -49,68 +52,113 @@ def init_env():
 def fetch_cloudflare_ips():
     url = os.getenv('CLOUDFLARE_IPS_URL')
     try:
-        res = requests.get(url, timeout=10)
+        res = requests.get(url, timeout=10, verify=False)
         return res.text.splitlines()
     except Exception as e:
         print(f"🚨 获取IP段失败: {e}")
         return []
 
-# 生成随机IP 
+# 生成随机IP（基于位运算实现）[5](@ref)
 def generate_random_ip(subnet):
-    base_ip = subnet.split('/')[0]
-    return ".".join(base_ip.split('.')[:3] + [str(random.randint(1, 254))])
+    """根据CIDR生成子网内的随机合法IP（排除网络地址和广播地址）"""
+    try:
+        network = ipaddress.ip_network(subnet, strict=False)
+        network_addr = int(network.network_address)
+        broadcast_addr = int(network.broadcast_address)
+        
+        # 排除网络地址和广播地址
+        first_ip = network_addr + 1
+        last_ip = broadcast_addr - 1
+        
+        # 生成随机IP
+        random_ip_int = random.randint(first_ip, last_ip)
+        return str(ipaddress.IPv4Address(random_ip_int))
+    except Exception as e:
+        print(f"生成随机IP错误: {e}，使用简单方法生成")
+        base_ip = subnet.split('/')[0]
+        return ".".join(base_ip.split('.')[:3] + [str(random.randint(1, 254))])
 
-# 自定义Ping测试
+# 自定义Ping测试（跨平台兼容）[6,8](@ref)
 def custom_ping(ip):
-    target = os.getenv('PING_TARGET')
+    target = urlparse(os.getenv('PING_TARGET')).netloc or os.getenv('PING_TARGET')
     count = int(os.getenv('PING_COUNT'))
     timeout = int(os.getenv('PING_TIMEOUT'))
     
     try:
-        # 构建ping命令[1,3](@ref)
-        cmd = f"ping -c {count} -W {timeout} -I {ip} {target}"
+        # 跨平台ping命令
+        if os.name == 'nt':  # Windows
+            cmd = f"ping -n {count} -w {timeout*1000} {target}"
+        else:  # Linux/Mac
+            cmd = f"ping -c {count} -W {timeout} -I {ip} {target}"
+        
         result = subprocess.run(
             cmd, 
             shell=True, 
             stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT,
-            text=True
+            text=True,
+            timeout=timeout + 2
         )
         
-        # 解析ping结果[6,7](@ref)
-        if "100% packet loss" in result.stdout:
+        # 解析ping结果
+        output = result.stdout.lower()
+        
+        if "100% packet loss" in output or "unreachable" in output:
             return float('inf'), 100.0  # 完全丢包
         
         # 提取延迟和丢包率
-        lines = result.stdout.split('\n')
-        loss_line = [l for l in lines if "packet loss" in l][0]
-        timing_lines = [l for l in lines if "time=" in l]
+        loss_line = next((l for l in result.stdout.split('\n') if "packet loss" in l.lower()), "")
+        timing_lines = [l for l in result.stdout.split('\n') if "time=" in l.lower()]
         
         # 计算丢包率
-        loss_percent = float(loss_line.split('%')[0].split()[-1])
+        loss_percent = 100.0
+        if loss_line:
+            loss_parts = loss_line.split('%')
+            if loss_parts:
+                try:
+                    loss_percent = float(loss_parts[0].split()[-1])
+                except:
+                    pass
         
         # 计算平均延迟
         delays = []
         for line in timing_lines:
             if "time=" in line:
                 time_str = line.split("time=")[1].split()[0]
-                delays.append(float(time_str))
+                try:
+                    delays.append(float(time_str))
+                except:
+                    continue
         avg_delay = np.mean(delays) if delays else float('inf')
         
         return avg_delay, loss_percent
         
+    except subprocess.TimeoutExpired:
+        return float('inf'), 100.0
     except Exception as e:
         print(f"Ping测试异常: {e}")
         return float('inf'), 100.0
 
-# TCP连接测试
+# TCP连接测试（带重试机制）[8,10](@ref)
 def tcp_ping(ip, port, timeout=2):
-    start = time.time()
-    try:
-        with socket.create_connection((ip, port), timeout=timeout):
-            return time.time() - start
-    except:
-        return None
+    retry = int(os.getenv('TCP_RETRY', 3))
+    success_count = 0
+    total_rtt = 0
+    
+    for _ in range(retry):
+        start = time.time()
+        try:
+            with socket.create_connection((ip, port), timeout=timeout) as sock:
+                rtt = (time.time() - start) * 1000  # 毫秒
+                total_rtt += rtt
+                success_count += 1
+        except:
+            pass
+        time.sleep(0.1)  # 短暂间隔
+    
+    loss_rate = 100 - (success_count / retry * 100)
+    avg_rtt = total_rtt / success_count if success_count > 0 else float('inf')
+    return avg_rtt, loss_rate
 
 # IP综合测试
 def test_ip(ip):
@@ -123,20 +171,7 @@ def test_ip(ip):
     
     else:  # TCP模式
         port = int(os.getenv('PORT', 443))
-        loss_count = 0
-        rtt_list = []
-        
-        # TCP三次测试
-        for _ in range(3):
-            rtt = tcp_ping(ip, port)
-            if rtt is None:
-                loss_count += 1
-            else:
-                rtt_list.append(rtt * 1000)  # 转毫秒
-        
-        # 计算指标
-        loss_rate = (loss_count / 3) * 100
-        avg_rtt = np.mean(rtt_list) if rtt_list else float('inf')
+        avg_rtt, loss_rate = tcp_ping(ip, port, timeout=float(os.getenv('PING_TIMEOUT', 2)))
         return (ip, avg_rtt, loss_rate, 0)  # 速度设为0
 
 ####################################################
@@ -148,7 +183,7 @@ if __name__ == "__main__":
     
     # 1. 打印配置参数
     print("="*60)
-    print(f"{'IP网络优化器 v2.0':^60}")
+    print(f"{'IP网络优化器 v2.1':^60}")
     print("="*60)
     print(f"测试模式: {os.getenv('MODE')}")
     
@@ -158,6 +193,7 @@ if __name__ == "__main__":
         print(f"Ping超时: {os.getenv('PING_TIMEOUT')}秒")
     else:
         print(f"TCP端口: {os.getenv('PORT')}")
+        print(f"TCP重试: {os.getenv('TCP_RETRY')}次")
     
     print(f"延迟范围: {os.getenv('RTT_RANGE')}ms")
     print(f"最大丢包: {os.getenv('LOSS_MAX')}%")
@@ -168,10 +204,15 @@ if __name__ == "__main__":
     # 2. 获取IP段并生成随机IP
     subnets = fetch_cloudflare_ips()
     if not subnets:
+        print("❌ 无法获取Cloudflare IP段，程序终止")
         exit(1)
     
-    all_ips = [generate_random_ip(random.choice(subnets)) 
-               for _ in range(int(os.getenv('IP_COUNT')))]
+    print(f"✅ 获取到 {len(subnets)} 个Cloudflare IP段")
+    
+    all_ips = []
+    for _ in range(int(os.getenv('IP_COUNT'))):
+        subnet = random.choice(subnets)
+        all_ips.append(generate_random_ip(subnet))
     
     # 3. 多线程测试（带进度条）
     results = []
@@ -235,3 +276,4 @@ if __name__ == "__main__":
             print(f"{i+1}. {ip_data[0]} | 延迟:{ip_data[1]:.2f}ms | 丢包:{ip_data[2]:.2f}%")
     
     print("="*60)
+    print("✅ 结果已保存至 results/ 目录")
