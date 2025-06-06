@@ -25,7 +25,7 @@ CONFIG = {
     "RTT_RANGE": "0~9999",          # 延迟范围(ms)
     "LOSS_MAX": 30.0,               # 最大丢包率(%)
     "THREADS": 50,                  # 并发线程数
-    "IP_COUNT": 300,                # 测试IP数量
+    "IP_COUNT": 700,                # 测试IP数量
     "TOP_IPS_LIMIT": 15,            # 精选IP数量
     "CLOUDFLARE_IPS_URL": "https://www.cloudflare.com/ips-v4",
     "TCP_RETRY": 3                  # TCP重试次数
