@@ -14,10 +14,10 @@ jobs:
       RTT_RANGE: "40~250"
       LOSS_MAX: 10
       DOWNLOAD_MIN: 1.00
-      THREADS: 50
-      IP_COUNT: 500  # 推荐测试数量
+      THREADS: 20         # 默认并发数
+      IP_COUNT: 200       # 默认测试IP数量
       SPEED_URL: "https://speed.cloudflare.com/__down?bytes=10000000"
-      CLOUDFLARE_IPS_URL: "www.cloudflare.com/ips-v4"  # 自动添加https
+      CLOUDFLARE_IPS_URL: "www.cloudflare.com/ips-v4"
 
     steps:
     - uses: actions/checkout@v4
@@ -29,9 +29,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install requests numpy
+        pip install requests numpy tqdm  # 添加tqdm依赖[2,11](@ref)
         sudo apt-get update
-        sudo apt-get install -y net-tools  # 网络工具支持
+        sudo apt-get install -y net-tools
 
     - name: Run IP Optimizer
       run: python ip_optimizer.py
