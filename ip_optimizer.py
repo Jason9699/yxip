@@ -106,7 +106,8 @@ if __name__ == "__main__":
     
     # 2. 获取IP段并生成随机IP
     subnets = fetch_cloudflare_ips()
-    all_ips = [generate_random_ip(subnet) for _ in range(IP_COUNT)]
+    # 修复点：将 subnet 改为 subnets 并使用 random.choice 随机选择子网
+    all_ips = [generate_random_ip(random.choice(subnets)) for _ in range(IP_COUNT)]
     
     # 3. 多线程测试
     results = []
