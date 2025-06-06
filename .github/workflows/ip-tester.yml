@@ -48,6 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Shanghai
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 添加权限令牌
     
     steps:
     - name: 设置时区
@@ -58,7 +59,10 @@ jobs:
       
     - name: 检出代码
       uses: actions/checkout@v4
-      
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}  # 添加权限令牌
+        fetch-depth: 0  # 获取完整历史记录
+        
     - name: 设置测试工具
       run: chmod +x scripts/*.sh && ./scripts/setup.sh
       
@@ -116,7 +120,11 @@ jobs:
         # 复制结果文件
         cp results/* ip-results/
         
-        # 提交到仓库
+        # 设置远程URL使用令牌
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        
+        # 添加、提交和推送
         git add ip-results/
         git commit -m "更新IP测试结果 ${{ github.run_id }}"
-        git push
+        git pull --rebase origin main  # 防止冲突
+        git push origin HEAD:main
