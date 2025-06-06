@@ -1,3 +1,4 @@
+import os  # 必须添加的导入语句
 import requests
 import numpy as np
 import random
@@ -5,8 +6,9 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 
 # 从环境变量读取配置
-MODE = os.getenv('MODE', 'TCP')
+MODE = os.getenv('MODE', 'TCP')  # 现在可以正常使用os模块
 PORT = int(os.getenv('PORT', 443))
+...  # 其余代码保持不变
 RTT_MIN, RTT_MAX = map(int, os.getenv('RTT_RANGE', '40~250').split('~'))
 LOSS_MAX = float(os.getenv('LOSS_MAX', 10))
 DOWNLOAD_MIN = float(os.getenv('DOWNLOAD_MIN', 1.0))
