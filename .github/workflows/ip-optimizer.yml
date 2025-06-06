@@ -17,7 +17,7 @@ jobs:
       IP_COUNT: 1000          # 随机生成 IP 数量
       THREADS: 50             # 线程数
       SPEED_URL: "https://speed.cloudflare.com/__down?bytes=10000000" # 测速链接
-      CLOUDFLARE_IPS: "https://www.cloudflare.com/ips-v4" # Cloudflare IP 段
+      CLOUDFLARE_IPS_URL: "https://www.cloudflare.com/ips-v4" # Cloudflare IP 段
 
     steps:
     - uses: actions/checkout@v4
