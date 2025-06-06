@@ -1,0 +1,70 @@
+name: IP Tester
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: '测试模式 (1:CloudflareIP, 2:非CloudflareIP, 3:两者)'
+        required: true
+        default: '1'
+        type: choice
+        options:
+        - '1'
+        - '2'
+        - '3'
+      test_type:
+        description: '协议类型 (TCP/HTTP)'
+        default: 'TCP'
+        type: choice
+        options:
+        - TCP
+        - HTTP
+      port:
+        description: '测试端口'
+        default: '443'
+      min_delay:
+        description: '最低延迟 (ms)'
+        default: '40'
+      max_delay:
+        description: '最高延迟 (ms)'
+        default: '250'
+      max_loss:
+        description: '最大丢包率 (%)'
+        default: '10'
+      min_speed:
+        description: '最低下载速度 (MB/s)'
+        default: '1.00'
+      test_url:
+        description: '测速文件URL'
+        default: 'https://example.com/100mb.bin'
+
+jobs:
+  run-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 设置测试工具
+      run: chmod +x scripts/*.sh && ./scripts/setup.sh
+      
+    - name: 更新IP列表
+      run: ./scripts/update-ips.sh
+      
+    - name: 运行测试
+      run: |
+        ./scripts/run-test.sh \
+          "${{ inputs.test_mode }}" \
+          "${{ inputs.test_type }}" \
+          "${{ inputs.port }}" \
+          "${{ inputs.min_delay }}" \
+          "${{ inputs.max_delay }}" \
+          "${{ inputs.max_loss }}" \
+          "${{ inputs.min_speed }}" \
+          "${{ inputs.test_url }}"
+          
+    - name: 保存结果
+      uses: actions/upload-artifact@v3
+      with:
+        name: ip-results
+        path: results/
