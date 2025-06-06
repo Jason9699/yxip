@@ -20,14 +20,26 @@ echo "准备测试IP列表..."
 case $test_mode in
   1)
     echo "测试模式: Cloudflare IP"
+    if [ ! -s "ip-lists/cloudflare-ips.txt" ]; then
+      echo "错误: Cloudflare IP列表为空!"
+      exit 1
+    fi
     cat ip-lists/cloudflare-ips.txt >> combined-ips.txt
     ;;
   2)
     echo "测试模式: 非Cloudflare IP"
+    if [ ! -s "ip-lists/non-cloudflare-ips.txt" ]; then
+      echo "错误: 非Cloudflare IP列表为空!"
+      exit 1
+    fi
     cat ip-lists/non-cloudflare-ips.txt >> combined-ips.txt
     ;;
   3)
     echo "测试模式: 所有IP"
+    if [ ! -s "ip-lists/cloudflare-ips.txt" ] && [ ! -s "ip-lists/non-cloudflare-ips.txt" ]; then
+      echo "错误: 所有IP列表都为空!"
+      exit 1
+    fi
     cat ip-lists/cloudflare-ips.txt ip-lists/non-cloudflare-ips.txt >> combined-ips.txt
     ;;
 esac
@@ -60,19 +72,22 @@ mkdir -p results
 
 # 所有测试通过的IP
 awk -F, 'NR>1{print $1}' result.csv > results/all.txt
-echo "全部IP数量: $(wc -l < results/all.txt)"
+all_count=$(wc -l < results/all.txt)
+echo "全部IP数量: $all_count"
 
 # 满足条件的优选IP
 awk -F, -v min_d=$min_delay -v max_d=$max_delay -v max_l=$loss -v min_s=$min_speed '
   NR>1 && $6>=min_d && $6<=max_d && $5<=max_l && $7>=min_s {print $1}
 ' result.csv > results/preferred.txt
-echo "优选IP数量: $(wc -l < results/preferred.txt)"
+preferred_count=$(wc -l < results/preferred.txt)
+echo "优选IP数量: $preferred_count"
 
 # 精选TOP15 IP
 awk -F, -v min_d=$min_delay -v max_d=$max_delay -v max_l=$loss -v min_s=$min_speed '
   NR>1 && $6>=min_d && $6<=max_d && $5<=max_l && $7>=min_s {print $0}
 ' result.csv | sort -t, -k6n -k5n -k7nr | head -15 | awk -F, '{print $1}' > results/selected.txt
-echo "精选IP数量: $(wc -l < results/selected.txt)"
+selected_count=$(wc -l < results/selected.txt)
+echo "精选IP数量: $selected_count"
 
 # 显示精选IP
 echo "精选IP列表:"
