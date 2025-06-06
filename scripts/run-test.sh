@@ -31,7 +31,7 @@ esac
 
 # 运行测试
 echo "开始测试..."
-args="-tl $max_delay -tll $min_delay -sl $loss -dn $min_speed -p 0 -url $test_url"
+args="-tl $max_delay -tll $min_delay -sl $loss -dn 10 -p 0 -url $test_url"
 
 if [ "$test_type" = "HTTP" ]; then
   args="$args -http"
