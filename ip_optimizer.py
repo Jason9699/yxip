@@ -15,14 +15,14 @@ import urllib3
 ####################################################
 # 环境变量默认值（可通过.env或GitHub Actions覆盖）
 CONFIG = {
-    "MODE": "PING",                 # 测试模式：PING/TCP
+    "MODE": "TCP",                 # 测试模式：PING/TCP
     "PING_TARGET": "https://www.google.com/generate_204", # Ping测试目标
-    "PING_COUNT": 4,                # Ping次数
+    "PING_COUNT": 3,                # Ping次数
     "PING_TIMEOUT": 2,               # Ping超时(秒)
     "PORT": 443,                    # TCP测试端口
-    "RTT_RANGE": "100~500",         # 延迟范围(ms)
+    "RTT_RANGE": "0~9999",         # 延迟范围(ms)
     "LOSS_MAX": 30.0,               # 最大丢包率(%)
-    "THREADS": 20,                  # 并发线程数
+    "THREADS": 50,                  # 并发线程数
     "IP_COUNT": 300,                # 测试IP数量
     "TOP_IPS_LIMIT": 15,            # 精选IP数量
     "CLOUDFLARE_IPS_URL": "www.cloudflare.com/ips-v4"
