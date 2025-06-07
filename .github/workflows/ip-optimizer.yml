@@ -12,7 +12,7 @@ jobs:
       MODE: TCP
       PORT: 443
       RTT_RANGE: "10~2000"
-      LOSS_MAX: 10
+      LOSS_MAX: 30
       THREADS: 50         # 默认并发数
       IP_COUNT: 200       # 默认测试IP数量
       SPEED_TEST: true    # SPEED_TEST=false 禁用测速
