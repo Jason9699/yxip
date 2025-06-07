@@ -19,7 +19,7 @@ import threading
 CONFIG = {
     "MODE": "TCP",                  # 测试模式：PING/TCP
     "PING_TARGET": "https://www.google.com/generate_204",  # Ping测试目标
-    "PING_COUNT": 3,                # Ping次数
+    "PING_COUNT": 2,                # Ping次数
     "PING_TIMEOUT": 2,              # Ping超时(秒)
     "PORT": 443,                    # TCP测试端口
     "RTT_RANGE": "10~5000",          # 延迟范围(ms)
@@ -28,7 +28,7 @@ CONFIG = {
     "IP_COUNT": 1000,                # 测试IP数量
     "TOP_IPS_LIMIT": 10,            # 精选IP数量
     "CLOUDFLARE_IPS_URL": "https://www.cloudflare.com/ips-v4",
-    "TCP_RETRY": 3                  # TCP重试次数
+    "TCP_RETRY": 2                  # TCP重试次数
 }
 
 ####################################################
