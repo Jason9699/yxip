@@ -1,4 +1,4 @@
-name: 11IP Optimizer
+name: IP Optimizer
 on:
   workflow_dispatch:
   schedule:
