@@ -22,7 +22,7 @@ CONFIG = {
     "PING_COUNT": 3,                # Ping次数
     "PING_TIMEOUT": 2,              # Ping超时(秒)
     "PORT": 443,                    # TCP测试端口
-    "RTT_RANGE": "10~5000",         # 延迟范围(ms)
+    "RTT_RANGE": "10~1000",         # 延迟范围(ms)
     "LOSS_MAX": 30.0,               # 最大丢包率(%)
     "THREADS": 50,                  # 并发线程数
     "IP_COUNT": 1000,               # 测试IP数量
@@ -30,9 +30,9 @@ CONFIG = {
     "CLOUDFLARE_IPS_URL": "https://www.cloudflare.com/ips-v4",
     "TCP_RETRY": 3,                 # TCP重试次数
     "SPEED_TEST": True,             # 是否启用测速
-    "SPEED_THREADS": 10,            # 测速并发数
+    "SPEED_THREADS": 20,            # 测速并发数
     "SPEED_URL": "https://speed.cloudflare.com/__down?bytes=10000000",  # 测速URL
-    "SPEED_TIMEOUT": 8,             # 测速超时(秒)
+    "SPEED_TIMEOUT": 3,             # 测速超时(秒)
     "DOWNLOAD_MIN": 1.0             # 最低下载速度(MB/s)
 }
 
