@@ -15,7 +15,7 @@ jobs:
       LOSS_MAX: 30
       DOWNLOAD_MIN: 0.1    # 最低下载速度要求(MB/s)
       THREADS: 50         # 默认并发数
-      IP_COUNT: 1000       # 默认测试IP数量
+      IP_COUNT: 2000       # 默认测试IP数量
       SPEED_URL: "https://speed.cloudflare.com/__down?bytes=10000000"
       CLOUDFLARE_IPS_URL: "www.cloudflare.com/ips-v4"
 
