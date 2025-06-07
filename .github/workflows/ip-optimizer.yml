@@ -16,11 +16,11 @@ jobs:
       DOWNLOAD_MIN: 1.00
       THREADS: 20         # 默认并发数
       IP_COUNT: 200       # 默认测试IP数量
-      SPEED_TEST: true       #SPEED_TEST=false 禁用测速
+      SPEED_TEST: true       # SPEED_TEST=false 禁用测速
       SPEED_URL: "https://speed.cloudflare.com/__down?bytes=10000000"
-      SPEED_TIMEOUT: 8
-      SPEED_THREADS: 10      SPEED_THREADS=5 降低测速并发数节省资源
-      DOWNLOAD_MIN: 1.0    #DOWNLOAD_MIN=2.5 设置更高速度要求
+      SPEED_TIMEOUT: 3
+      SPEED_THREADS: 20     # SPEED_THREADS=5 降低测速并发数节省资源
+      DOWNLOAD_MIN: 1.0    # DOWNLOAD_MIN=2.5 设置更高速度要求
       CLOUDFLARE_IPS_URL: "www.cloudflare.com/ips-v4"
 
     steps:
