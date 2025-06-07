@@ -19,21 +19,21 @@ import threading
 CONFIG = {
     "MODE": "TCP",                  # 测试模式：PING/TCP
     "PING_TARGET": "https://www.google.com/generate_204",  # Ping测试目标
-    "PING_COUNT": 3,                # Ping次数
-    "PING_TIMEOUT": 3,              # Ping超时(秒)
+    "PING_COUNT": 1,                # Ping次数
+    "PING_TIMEOUT": 2,              # Ping超时(秒)
     "PORT": 443,                    # TCP测试端口
     "RTT_RANGE": "10~2000",         # 延迟范围(ms)
     "LOSS_MAX": 30,               # 最大丢包率(%)
     "THREADS": 50,                  # 并发线程数
-    "IP_COUNT": 1000,               # 测试IP数量
+    "IP_COUNT": 2000,               # 测试IP数量
     "TOP_IPS_LIMIT": 10,            # 精选IP数量
     "CLOUDFLARE_IPS_URL": "https://www.cloudflare.com/ips-v4",
     "TCP_RETRY": 3,                 # TCP重试次数
     "SPEED_TEST": True,             # 是否启用测速
     "SPEED_THREADS": 20,            # 测速并发数
     "SPEED_URL": "https://speed.cloudflare.com/__down?bytes=10000000",  # 测速URL
-    "SPEED_TIMEOUT": 5,             # 测速超时(秒)
-    "DOWNLOAD_MIN": 0             # 最低下载速度(MB/s)
+    "SPEED_TIMEOUT": 3,             # 测速超时(秒)
+    "DOWNLOAD_MIN": 1             # 最低下载速度(MB/s)
 }
 
 ####################################################
